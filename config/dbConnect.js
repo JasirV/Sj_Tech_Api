@@ -10,8 +10,8 @@ const path=require('path');
 
  const connectDB = async () => {
     try {
-        await mongoose.connect("mongodb+srv://sjtechqa:ObM9hcjG6q3LJA76@sjtechbeta.c620n.mongodb.net/?retryWrites=true&w=majority&appName=sjtechbeta");
-        console.log(`DB connected`);
+        await mongoose.connect(process.env.DB_URL);
+        console.log(`DB connected`); 
     } catch (error) { 
         console.log(error);
     }

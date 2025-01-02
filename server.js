@@ -1,6 +1,11 @@
 const app =require('./app')
+const connect =require('./config/dbConnect');
+const dotenv=require('dotenv')
+dotenv.config()
 
-app.listen(3000,()=>{
-    console.log("server run on 3000");
+const port=process.env.PORT
+connect()
+app.listen(port,()=>{
+    console.log(`server run on ${port} `);
     
 })  
