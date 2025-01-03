@@ -22,6 +22,32 @@ const getAllProducts = async (req, res, next) => {
   }
 };
 
+//Get A Product by Category
+const getProductByCategory = async (req, res, next) => {
+  try {
+    const category = req.params.category;
+
+    // Use aggregate to match products by category
+    const products = await Product.aggregate([
+      { $match: { Category: category } },
+    ]);
+
+    // Check if any products were found
+    if (products.length === 0) {
+      return res.status(404).json({ message: 'No products found for this category!' });
+    }
+
+    // Return the products if found
+    res.status(200).json({
+      message: 'Products retrieved successfully!',
+      data: products,
+    });
+  } catch (error) {
+    next(error); // Pass error to error handler
+  }
+};
+
+
 // Get a single product by ID
 const getProductById = async (req, res, next) => {
   try {
@@ -71,4 +97,5 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
+  getProductByCategory
 };
