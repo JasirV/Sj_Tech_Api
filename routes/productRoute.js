@@ -9,8 +9,8 @@ const router=express.Router()
 router.post('/',authenticateToken,uploadImage,createProduct)
 router.get('/',getAllProducts)
 .get('/:id',getProductById)
-.put('/:id',authenticateToken,updateProduct)
+.put('/:id',authenticateToken,uploadImage,updateProduct)
 .delete('/:id',authenticateToken,deleteProduct)
 .get('/service/:category',getProductByCategory)
 
-module.exports=router
+module.exports=router 
