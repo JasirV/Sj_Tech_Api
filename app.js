@@ -15,4 +15,4 @@ app.use('/api/product/',productRouter)
 app.use('/api/auth/',authRouter)
 app.use(errorHandler);
  
-module.exports=app
+module.exports=app 
