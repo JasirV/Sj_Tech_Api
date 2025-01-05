@@ -27,7 +27,8 @@ const uploadImage = (req, res, next) => {
   // Configure to accept multiple files for secondaryImages as an array
   const uploadFields = [
     { name: 'mainImage', maxCount: 1 }, // Single upload for mainImage
-    { name: 'secondaryImages', maxCount: 5 } // Multiple uploads for secondary images
+    { name: 'secondaryImages', maxCount: 5 }, // Multiple uploads for secondary images
+    {name:"Image",maxCount:1}
   ];
   
   upload.fields(uploadFields)(req, res, async (err) => {
