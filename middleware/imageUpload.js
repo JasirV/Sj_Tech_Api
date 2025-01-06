@@ -1,18 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
-const dotenv = require('dotenv');
-const { log } = require("console");
+const dotenv = require("dotenv");
 dotenv.config();
-
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, "uploads"),
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + file.originalname);
-  },
-});
-
-const upload = multer({ storage });
 
 const cloudinary = require("cloudinary").v2;
 cloudinary.config({
@@ -21,16 +11,24 @@ cloudinary.config({
   api_secret: process.env.api_secret,
 });
 
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, "uploads"),
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage });
+
 const uploadImage = (req, res, next) => {
   console.log("Starting upload process...");
 
-  // Configure to accept multiple files for secondaryImages as an array
   const uploadFields = [
-    { name: 'mainImage', maxCount: 1 }, // Single upload for mainImage
-    { name: 'secondaryImages', maxCount: 5 }, // Multiple uploads for secondary images
-    {name:"Image",maxCount:1}
+    { name: "mainImage", maxCount: 1 },
+    { name: "secondaryImages", maxCount: 5 },
+    { name: "Image", maxCount: 1 },
   ];
-  
+
   upload.fields(uploadFields)(req, res, async (err) => {
     if (err) {
       console.error("Multer error:", err);
@@ -38,7 +36,6 @@ const uploadImage = (req, res, next) => {
     }
 
     try {
-      // Handle main image upload
       let mainImageUrl = null;
       if (req.files.mainImage && req.files.mainImage[0]) {
         const mainImagePath = req.files.mainImage[0].path;
@@ -49,7 +46,6 @@ const uploadImage = (req, res, next) => {
         console.log("Main image uploaded successfully:", mainImageUrl);
       }
 
-      // Handle secondary images
       let secondaryImagesUrls = [];
       if (req.files.secondaryImages) {
         for (const file of req.files.secondaryImages) {
@@ -62,36 +58,42 @@ const uploadImage = (req, res, next) => {
         }
       }
 
-      // Update the request body with Cloudinary URLs
+      let imageFieldUrl = null;
+      if (req.files.Image && req.files.Image[0]) {
+        const imagePath = req.files.Image[0].path;
+        const imageResult = await cloudinary.uploader.upload(imagePath, {
+          folder: "Product-IMG",
+        });
+        imageFieldUrl = imageResult.secure_url;
+        console.log("Image field uploaded successfully:", imageFieldUrl);
+      }
+
       if (mainImageUrl) {
         req.body.mainImage = mainImageUrl;
       }
       if (secondaryImagesUrls.length > 0) {
         req.body.secondaryImages = secondaryImagesUrls;
       }
-
-      // Clean up uploaded files
-      for (const file of req.files.mainImage || []) {
-        fs.unlink(file.path, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error("Error deleting local file:", unlinkErr);
-          } else {
-            console.log("Local file deleted successfully.");
-          }
-        });
+      if (imageFieldUrl) {
+        req.body.Image = imageFieldUrl;
       }
 
-      for (const file of req.files.secondaryImages || []) {
-        fs.unlink(file.path, (unlinkErr) => {
-          if (unlinkErr) {
-            console.error("Error deleting local file:", unlinkErr);
-          } else {
-            console.log("Local file deleted successfully.");
-          }
-        });
-      }
+      const deleteLocalFiles = (files) => {
+        for (const file of files || []) {
+          fs.unlink(file.path, (unlinkErr) => {
+            if (unlinkErr) {
+              console.error("Error deleting local file:", unlinkErr);
+            } else {
+              console.log("Local file deleted successfully.");
+            }
+          });
+        }
+      };
 
-      // Proceed to next middleware
+      deleteLocalFiles(req.files.mainImage);
+      deleteLocalFiles(req.files.secondaryImages);
+      deleteLocalFiles(req.files.Image);
+
       next();
     } catch (err) {
       console.error("Cloudinary upload error:", err);
