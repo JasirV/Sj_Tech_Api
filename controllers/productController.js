@@ -1,3 +1,4 @@
+const uploadImages = require('../middleware/uploadImages');
 const Product =require('../models/productModel')
 
 
@@ -64,16 +65,65 @@ const getProductById = async (req, res, next) => {
 // Update a product by ID
 const updateProduct = async (req, res, next) => {
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
+    const { id } = req.params;
+
+    // Fetch existing product
+    const existingProduct = await Product.findById(id);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Product not found!" });
+    }
+
+    // Parse files and organize by field
+    const files = req.files || [];
+    const uploadedImages = {};
+
+    // Map uploaded files to appropriate fields (Image, secondaryImages, etc.)
+    files.forEach((file) => {
+      if (!uploadedImages[file.fieldname]) {
+        uploadedImages[file.fieldname] = [];
+      }
+      uploadedImages[file.fieldname].push(file.path); // Store file paths for each field
+    });
+
+    // Handle deletions and additions for `secondaryImages`
+    const { deletedImages = [] } = req.body; // Array of image URLs to delete
+    let secondaryImages = existingProduct.secondaryImages || [];
+
+    // Remove deleted images from the `secondaryImages` array
+    secondaryImages = secondaryImages.filter(
+      (image) => !deletedImages.includes(image)
+    );
+
+    // Add new uploaded images to `secondaryImages`
+    if (uploadedImages.secondaryImages) {
+      secondaryImages = [...secondaryImages, ...uploadedImages.secondaryImages];
+    }
+
+    // Handle the main image, prioritizing the uploaded file if present
+    const mainImage = uploadedImages.mainImage?.[0] || existingProduct.mainImage;
+    const Image = uploadedImages.Image?.[0] || existingProduct.Image;
+
+    // Handle the case where `mainImage` or `Image` is a URL instead of a file
+    const updatedData = {
+      ...req.body,
+      secondaryImages,
+      mainImage, // Update the mainImage, either from the uploaded file or existing data
+      Image, // Update the Image field, either from the uploaded file or existing data
+    };
+
+    // Update product in the database
+    const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, {
       new: true,
       runValidators: true,
     });
-    if (!product) {
-      return res.status(404).json({ message: 'Product not found!' });
-    }
-    res.status(200).json({ message: 'Product updated successfully!', data: product });
+
+    res.status(200).json({
+      message: "Product updated successfully!",
+      data: updatedProduct,
+    });
   } catch (error) {
-    next(error);
+    console.error("Error updating product:", error);
+    next(error); // Pass the error to the next middleware
   }
 };
 

@@ -1,0 +1,46 @@
+const cloudinary = require("cloudinary").v2;
+
+/**
+ * Helper function to upload images to Cloudinary.
+ * @param {Object} files - The files object from multer.
+ * @param {Object} existingData - Existing image data from the database.
+ * @returns {Object} - Uploaded image URLs.
+ */
+const uploadImages = async (files, existingData) => {
+  const uploadedImages = {
+    mainImage: existingData.mainImage || null,
+    secondaryImages: existingData.secondaryImages || [],
+    Image: existingData.Image || null,
+  };
+
+  // Upload mainImage if provided
+  if (files.mainImage && files.mainImage[0]) {
+    const mainImagePath = files.mainImage[0].path;
+    const mainImageResult = await cloudinary.uploader.upload(mainImagePath, {
+      folder: "Product-IMG",
+    });
+    uploadedImages.mainImage = mainImageResult.secure_url;
+  }
+
+  // Upload and append secondaryImages if provided
+  if (files.secondaryImages) {
+    for (const file of files.secondaryImages) {
+      const result = await cloudinary.uploader.upload(file.path, {
+        folder: "Product-IMG",
+      });
+      uploadedImages.secondaryImages.push(result.secure_url);
+    }
+  }
+
+  // Upload Image if provided
+  if (files.Image && files.Image[0]) {
+    const imagePath = files.Image[0].path;
+    const imageResult = await cloudinary.uploader.upload(imagePath, {
+      folder: "Product-IMG",
+    });
+    uploadedImages.Image = imageResult.secure_url;
+  }
+
+  return uploadedImages;
+};
+module.exports=uploadImages
