@@ -73,59 +73,54 @@ const updateProduct = async (req, res, next) => {
       return res.status(404).json({ message: "Product not found!" });
     }
 
-    // Parse files and organize by field
-    const files = req.files || [];
+    // Parse files from `req.files`
+    const files = req.files || {};
     const uploadedImages = {};
+    console.log("Files received:", files);
 
-    // Map uploaded files to appropriate fields (Image, secondaryImages, etc.)
-    files.forEach((file) => {
-      if (!uploadedImages[file.fieldname]) {
-        uploadedImages[file.fieldname] = [];
-      }
-      uploadedImages[file.fieldname].push(file.path); // Store file paths for each field
-    });
+    // Process files for each field
+    for (const field in files) {
+      uploadedImages[field] = files[field].map((file) => file.path);
+    }
 
     // Handle deletions and additions for `secondaryImages`
     const { deletedImages = [] } = req.body; // Array of image URLs to delete
+    console.log("Deleted Images:", deletedImages);
     let secondaryImages = existingProduct.secondaryImages || [];
 
-    // Remove deleted images from the `secondaryImages` array
+    // Remove deleted images
     secondaryImages = secondaryImages.filter(
       (image) => !deletedImages.includes(image)
     );
 
-    // Add new uploaded images to `secondaryImages`
+    // Add new uploaded images
     if (uploadedImages.secondaryImages) {
       secondaryImages = [...secondaryImages, ...uploadedImages.secondaryImages];
     }
 
-    // Handle the main image, prioritizing the uploaded file if present
-    const mainImage = uploadedImages.mainImage?.[0] || existingProduct.mainImage;
-    const Image = uploadedImages.Image?.[0] || existingProduct.Image;
-
-    // Handle the case where `mainImage` or `Image` is a URL instead of a file
+    // Merge updated fields
     const updatedData = {
       ...req.body,
       secondaryImages,
-      mainImage, // Update the mainImage, either from the uploaded file or existing data
-      Image, // Update the Image field, either from the uploaded file or existing data
+      mainImage: uploadedImages.mainImage?.[0] || existingProduct.mainImage,
+      Image: uploadedImages.Image?.[0] || existingProduct.Image,
     };
 
-    // Update product in the database
+    // Update product
     const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, {
       new: true,
       runValidators: true,
     });
 
-    res.status(200).json({
-      message: "Product updated successfully!",
-      data: updatedProduct,
-    });
+    res
+      .status(200)
+      .json({ message: "Product updated successfully!", data: updatedProduct });
   } catch (error) {
     console.error("Error updating product:", error);
-    next(error); // Pass the error to the next middleware
+    next(error);
   }
 };
+
 
 // Delete a product by ID
 const deleteProduct = async (req, res, next) => {
