@@ -48,18 +48,41 @@ const uploadImage = (req, res, next) => {
         const mainImageResult = await cloudinary.uploader.upload(mainImagePath, {
           folder: "Product-IMG",
         });
-        mainImageUrl = mainImageResult.secure_url;
+        mainImageUrl = mainImageResult.secure_url; // Use the Cloudinary URL
+        fs.unlink(mainImagePath, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting local file:", unlinkErr);
+          }
+        });
       }
 
-      // Append new secondaryImages and retain old ones
-      if (req.files.secondaryImages) {
+      // Handle secondaryImages (multiple files)
+      if (req.files.secondaryImages && req.files.secondaryImages.length > 0) {
+        const imageUrls = [];
+
+        // Iterate over each file in req.files.secondaryImages
         for (const file of req.files.secondaryImages) {
-          const secondaryImagePath = file.path;
-          const result = await cloudinary.uploader.upload(secondaryImagePath, {
-            folder: "Product-IMG",
-          });
-          secondaryImagesUrls.push(result.secure_url);
+          if (file && file.path) {
+            try {
+              const result = await cloudinary.uploader.upload(file.path, {
+                folder: "Product-IMG", // Cloudinary folder where the images will be stored
+              });
+              imageUrls.push(result.secure_url); // Push Cloudinary URL
+              fs.unlink(file.path, (unlinkErr) => {
+                if (unlinkErr) {
+                  console.error("Error deleting local file:", unlinkErr);
+                }
+              });
+            } catch (uploadErr) {
+              console.error("Error uploading to Cloudinary:", uploadErr);
+            }
+          } else {
+            console.error("File path not found for secondary image");
+          }
         }
+
+        // Attach the array of Cloudinary image URLs to the request body
+        req.body.secondaryImages = imageUrls;
       }
 
       // Upload Image if provided
@@ -68,29 +91,17 @@ const uploadImage = (req, res, next) => {
         const imageResult = await cloudinary.uploader.upload(imagePath, {
           folder: "Product-IMG",
         });
-        imageFieldUrl = imageResult.secure_url;
+        imageFieldUrl = imageResult.secure_url; // Use the Cloudinary URL
+        fs.unlink(imagePath, (unlinkErr) => {
+          if (unlinkErr) {
+            console.error("Error deleting local file:", unlinkErr);
+          }
+        });
       }
 
       // Update request body with final URLs
       req.body.mainImage = mainImageUrl;
-      req.body.secondaryImages = secondaryImagesUrls;
       req.body.Image = imageFieldUrl;
-
-      // Function to delete local files after upload
-      const deleteLocalFiles = (files) => {
-        for (const file of files || []) {
-          fs.unlink(file.path, (unlinkErr) => {
-            if (unlinkErr) {
-              console.error("Error deleting local file:", unlinkErr);
-            }
-          });
-        }
-      };
-
-      // Clean up local uploaded files
-      deleteLocalFiles(req.files.mainImage);
-      deleteLocalFiles(req.files.secondaryImages);
-      deleteLocalFiles(req.files.Image);
 
       next();
     } catch (err) {
