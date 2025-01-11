@@ -14,6 +14,9 @@ app.use(bodyParser.json({ limit: '100mb' }));
 app.use(bodyParser.urlencoded({ limit: '100mb', extended: true }));
 app.use('/api/product/',productRouter)
 app.use('/api/auth/',authRouter)
+app.get('/api/fake', (req, res) => {
+    res.send('Hello World');
+  });
 app.use(errorHandler);
  
 module.exports=app 
