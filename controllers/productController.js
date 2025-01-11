@@ -76,7 +76,7 @@ const updateProduct = async (req, res, next) => {
     // Parse files from `req.files`
     const files = req.files || {};
     const uploadedImages = {};
-    console.log("Files received:", files);
+    console.log("Files received:", req.body);
 
     // Process files for each field
     for (const field in files) {
