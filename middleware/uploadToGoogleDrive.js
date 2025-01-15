@@ -68,6 +68,6 @@ const uploadToGoogleDrive = async (file) => {
   }
 };
 
-module.exports = {
+module.exports = { 
   uploadToGoogleDrive,
 };
