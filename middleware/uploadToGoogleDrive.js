@@ -1,18 +1,6 @@
+require('dotenv').config(); // Load environment variables from .env
 const { google } = require('googleapis');
 const fs = require('fs');
-const path = require('path');
-
-// Path to the service account key file
-const keyFilePath = path.join(__dirname, '../apikeys.json');
-
-// Authenticate using the service account
-const auth = new google.auth.GoogleAuth({
-  keyFile: keyFilePath,
-  scopes: ['https://www.googleapis.com/auth/drive'], // Full access to Google Drive
-});
-
-// Initialize Google Drive API client
-const drive = google.drive({ version: 'v3', auth });
 
 /**
  * Upload a file to Google Drive and make it publicly accessible
@@ -23,6 +11,18 @@ const uploadToGoogleDrive = async (file) => {
   if (!file || !file.originalname || !file.mimetype || !file.path) {
     throw new Error('Invalid file object. Ensure originalname, mimetype, and path are provided.');
   }
+
+  // Parse the service account JSON from the environment variable
+  const serviceAccountJson = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_JSON);
+
+  // Authenticate using the parsed service account JSON
+  const auth = new google.auth.GoogleAuth({
+    credentials: serviceAccountJson,
+    scopes: ['https://www.googleapis.com/auth/drive'], // Full access to Google Drive
+  });
+
+  // Initialize Google Drive API client
+  const drive = google.drive({ version: 'v3', auth });
 
   const fileMetadata = {
     name: file.originalname, // Set the file name in Google Drive
