@@ -46,3 +46,4 @@ Thumbs.db
 
 # Debug files
 *.log
+apikeys.json/
