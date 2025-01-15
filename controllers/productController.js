@@ -1,11 +1,13 @@
 const uploadImages = require('../middleware/uploadImages');
+const uploadToGoogleDrive = require('../middleware/uploadToGoogleDrive');
 const Product =require('../models/productModel')
-
+const driveService = require('../middleware/uploadToGoogleDrive');
 
 // Create a new product
 const createProduct = async (req, res, next) => {
   try {
     const product = new Product(req.body);
+    console.log(product)
     const savedProduct = await product.save();
     res.status(201).json({ message: 'Product created successfully!', data: savedProduct });
   } catch (error) {
@@ -134,6 +136,20 @@ const deleteProduct = async (req, res, next) => {
     next(error);
   }
 };
+const uploadFile = async (req, res) => {
+  try {
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: 'No file uploaded.' });
+    }
+
+    const driveFile = await driveService.uploadToGoogleDrive(file);
+    res.status(200).json({ message: 'File uploaded successfully', driveFile });
+  } catch (error) {
+    console.error('Upload error:', error.message);
+    res.status(500).json({ error: 'Failed to upload file to Google Drive.' });
+  }
+};
 
 // Export all controllers
 module.exports = {
@@ -142,5 +158,6 @@ module.exports = {
   getProductById,
   updateProduct,
   deleteProduct,
-  getProductByCategory
+  getProductByCategory,
+  uploadFile
 };
