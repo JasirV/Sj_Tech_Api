@@ -36,9 +36,13 @@ const ProductSchema = new mongoose.Schema({
   secondaryImages: {
     type: [String], // Array of strings
     required: true
+  },
+  pdf:{
+    type:String
   }
 }, { timestamps: true }); // Adds createdAt and updatedAt fields
 
 const Product = mongoose.model('Product', ProductSchema);
 
 module.exports=Product
+ 
