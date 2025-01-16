@@ -4,7 +4,6 @@ const { google } = require('googleapis');
 require('dotenv').config();
 
 const keyFilePath = path.join(__dirname, 'apikeys.json');;
-
 const auth = new google.auth.GoogleAuth({
   keyFile: keyFilePath,
   scopes: ['https://www.googleapis.com/auth/drive.file'],

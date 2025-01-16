@@ -2,6 +2,7 @@ const uploadImages = require('../middleware/uploadImages');
 const uploadToGoogleDrive = require('../middleware/uploadToGoogleDrive');
 const Product =require('../models/productModel')
 const driveService = require('../middleware/uploadToGoogleDrive');
+const drive = require('../middleware/uploadToGoogleDrive');
 
 // Create a new product
 const createProduct = async (req, res, next) => {
@@ -143,7 +144,7 @@ const uploadFile = async (req, res) => {
       return res.status(400).json({ message: 'No file uploaded.' });
     }
 
-    const driveFile = await driveService.uploadToGoogleDrive(file);
+    const driveFile = await driveService.uploadToGoogleDrive(drive,file);
     res.status(200).json({ message: 'File uploaded successfully', driveFile });
   } catch (error) {
     console.error('Upload error:', error.message);
