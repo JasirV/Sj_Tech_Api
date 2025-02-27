@@ -69,56 +69,49 @@ const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    // Fetch existing product
-    const existingProduct = await Product.findById(id);
-    if (!existingProduct) {
-      return res.status(404).json({ message: "Product not found!" });
-    }
+    // // Fetch existing product
+    // const existingProduct = await Product.findById(id);
+    // if (!existingProduct) {
+    //   return res.status(404).json({ message: "Product not found!" });
+    // }
 
-    // Parse files from `req.files`
-    const files = req.files || {};
-    const uploadedImages = {};
-    console.log("Files received:", req.body);
+    // // Create an object to store only the changed fields
+    // const updatedData = {};
 
-    // Process files for each field
-    for (const field in files) {
-      uploadedImages[field] = files[field].map((file) => file.path);
-    }
+    // // Compare each field in `req.body` with the existing product data
+    // for (const key in req.body) {
+    //   if (req.body[key] !== existingProduct[key]) {
+    //     updatedData[key] = req.body[key];
+    //   }
+    // }
 
-    // Handle deletions and additions for `secondaryImages`
-    const { deletedImages = [] } = req.body; // Array of image URLs to delete
-    console.log("Deleted Images:", deletedImages);
-    let secondaryImages = existingProduct.secondaryImages || [];
+    // // Ensure required fields are not removed
+    // if (updatedData.Image === null || updatedData.Image === undefined) {
+    //   updatedData.Image = existingProduct.Image; // Retain existing value
+    // }
+    // if (updatedData.mainImage === null || updatedData.mainImage === undefined) {
+    //   updatedData.mainImage = existingProduct.mainImage; // Retain existing value
+    // }
+    // updatedData.secondaryImages=[updatedData.secondaryImages,...existingProduct.secondaryImages]
+    // // If no fields were changed, return a message
+    // if (Object.keys(updatedData).length === 0) {
+    //   return res.status(200).json({ message: "No changes detected!", data: existingProduct });
+    // }
 
-    // Remove deleted images
-    secondaryImages = secondaryImages.filter(
-      (image) => !deletedImages.includes(image)
-    );
+    // // Update product with only the changed fields
+    // const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, {
+    //   new: true, // Return the updated document
+    //   runValidators: true, // Run schema validators on update
+    // });
 
-    // Add new uploaded images
-    if (uploadedImages.secondaryImages) {
-      secondaryImages = [...secondaryImages, ...uploadedImages.secondaryImages];
-    }
-
-    // Merge updated fields
-    const updatedData = {
-      ...req.body,
-      secondaryImages,
-      mainImage: uploadedImages.mainImage?.[0] || existingProduct.mainImage,
-      Image: uploadedImages.Image?.[0] || existingProduct.Image,
-    };
-
-    // Update product
-    const updatedProduct = await Product.findByIdAndUpdate(id, updatedData, {
-      new: true,
-      runValidators: true,
+    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
+      new: true, // Returns the updated document
+      runValidators: true, // Ensures validation is applied
     });
 
-    res
-      .status(200)
-      .json({ message: "Product updated successfully!", data: updatedProduct });
+console.log(updatedProduct,'up')
+    res.status(200).json({ message: "Product updated successfully!", data: updatedProduct });
   } catch (error) {
-    console.error("Error updating product:", error);
     next(error);
   }
 };
