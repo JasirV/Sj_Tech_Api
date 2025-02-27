@@ -6,13 +6,12 @@ const multer = require('multer');
 const path = require('path');
 const uploadsPath = path.join(__dirname, 'uploads');
 const upload = multer({ dest: uploadsPath });
-
 const router=express.Router()
 
 router.post('/',authenticateToken,uploadImage,createProduct)
 router.get('/',getAllProducts)
 .get('/:id',getProductById)
-.put('/:id',authenticateToken,uploadImage,updateProduct)
+.put('/:id',authenticateToken,upload.none(),updateProduct)
 .delete('/:id',authenticateToken,deleteProduct)
 .get('/service/:category',getProductByCategory)
 router.post('/upload', upload.single('file'), uploadFile);
